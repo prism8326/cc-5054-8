@@ -1,0 +1,10 @@
+# 实验产物（体积大、可由管线重新生成）
+runs/
+output/
+*.yuv
+*.ivf
+*.y4m
+*.tbl
+__pycache__/
+.pytest_cache/
+*.egg-info/

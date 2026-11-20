@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grainbench"
+version = "1.0.0"
+description = "胶片颗粒编解码实验台：直接编码 vs 干净底图 + AV1 film grain 元数据"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10", "pillow>=9.0"]
+
+[tool.setuptools]
+packages = ["grainbench"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

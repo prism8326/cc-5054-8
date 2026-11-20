@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>胶片颗粒编解码实验台</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>胶片颗粒编解码实验台</h1>
+  <p class="sub">同亮度 · 同运动 · 同码量 —— 直接编码 vs 干净底图 + AV1 film grain 元数据</p>
+</header>
+
+<section class="controls">
+  <label>素材组
+    <select id="group">
+      <option value="adherent">adherent · 织物微纹跟随物体</option>
+      <option value="screen">screen · 随机颗粒跟随屏幕</option>
+    </select>
+  </label>
+  <label>编码路径
+    <select id="route">
+      <option value="direct">direct · 直接压缩原片</option>
+      <option value="model">model · 底图 + 颗粒模型</option>
+      <option value="hybrid">hybrid · 分段预算决策</option>
+    </select>
+  </label>
+  <label>显示层（同码量三态）
+    <select id="layer">
+      <option value="clean">无颗粒底图（aomdec --skip-film-grain）</option>
+      <option value="grain" selected>解码器合成输出（含颗粒）</option>
+      <option value="source">基准原片</option>
+    </select>
+  </label>
+  <label>帧 <input type="range" id="frame" min="0" max="47" value="0">
+    <span id="frameLabel">0</span></label>
+  <button id="play">播放</button>
+</section>
+
+<section class="stage">
+  <div class="framewrap">
+    <img id="frameImg" alt="当前帧">
+    <div id="frameTag" class="tag"></div>
+  </div>
+  <div class="trail">
+    <h3>沿运动轨迹取样：纹理跟物体走 vs 噪声跟屏幕走</h3>
+    <canvas id="trailChart" width="520" height="240"></canvas>
+    <p class="hint">物体坐标相关高 = 细节附着在运动物体上（布纹）；
+      屏幕坐标相关高、物体坐标低 = 颗粒固定在屏幕上逐帧刷新。</p>
+  </div>
+</section>
+
+<section class="panels">
+  <div class="card">
+    <h3>频段能量（独立解码残差 FFT）</h3>
+    <canvas id="bandChart" width="380" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h3>布片纹理对比度（逐帧标准差）</h3>
+    <canvas id="contrastChart" width="380" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h3>分离器：亮度分段强度与时间相干性</h3>
+    <div id="separator"></div>
+  </div>
+</section>
+
+<section class="timeline-card">
+  <h3>两路选择发生变化的位置（分段路由时间线）</h3>
+  <div id="timeline"></div>
+  <div id="decisionDetail"></div>
+</section>
+
+<section class="table-card">
+  <h3>同码量汇总指标</h3>
+  <table id="summaryTable"><thead>
+    <tr><th>路径</th><th>字节</th><th>PSNR(dB)</th><th>高频能量</th>
+      <th>纹理对比度</th><th>物体坐标相关</th><th>屏幕坐标相关</th></tr>
+  </thead><tbody></tbody></table>
+  <div id="parity"></div>
+</section>
+
+<script src="/app.js"></script>
+</body>
+</html>
