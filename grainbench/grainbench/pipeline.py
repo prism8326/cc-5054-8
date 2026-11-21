@@ -8,9 +8,11 @@ import numpy as np
 from PIL import Image
 
 from . import analyzer as az
+from . import bitstream as bs
 from . import encoder as enc
 from . import verify
 from .config import ExperimentConfig
+from .grainsynth import synth_luma
 from .synth import generate, read_i420_y
 
 
@@ -70,17 +72,25 @@ def run(out_root: Path, cfg: ExperimentConfig | None = None) -> Path:
         }
         metrics = {}
         decoded_store = {}
+        state_store = {}
         for route, ivf in streams.items():
             grain_out = verify.evaluate_stream(
                 ivf, src, geometry, cfg, apply_grain=True)
             base_out = verify.evaluate_stream(
                 ivf, clean, geometry, cfg, apply_grain=False)
             decoded_store[route] = grain_out["frames"]
+            # 保存每显示帧实际采用的颗粒状态，并用它独立重演核对。
+            states = bs.extract(ivf)
+            state_store[route] = states
             metrics[route] = {
                 "bytes": manifest["sizes"][route],
                 "with_grain": _strip_frames(grain_out),
                 "base_only": _strip_frames(base_out),
+                "replay": _replay_states(base_out["frames"],
+                                         grain_out["frames"], states),
+                "scene_cuts": bs.scene_cuts(states),
             }
+        _save_states(group_dir, state_store)
 
         # 参考基准：原片与干净底图自身的统计。
         ref_obj, ref_scr = verify.trail_correlations(src, geometry, cfg)
@@ -119,6 +129,40 @@ def run(out_root: Path, cfg: ExperimentConfig | None = None) -> Path:
     summary_path = out_root / "report.json"
     summary_path.write_text(json.dumps(summary, indent=2, allow_nan=False))
     return summary_path
+
+
+def _replay_states(base_frames: np.ndarray, grain_frames: np.ndarray,
+                   states: list[bs.DisplayState]) -> dict:
+    """用码流解析出的逐帧状态对干净底图重演，与含颗粒输出逐像素核对。
+
+    这是"逐帧状态缓存"模型的可复核证据：若状态归属正确，重演应逐像素
+    等于解码器输出；若种子按显示序号误配，则会在隐藏帧/show_existing 处分叉。
+    """
+    n = min(len(base_frames), len(grain_frames), len(states))
+    exact = 0
+    worst = 0
+    for i in range(n):
+        st = states[i]
+        if st.params is None or st.seed is None:
+            replay = base_frames[i]
+        else:
+            p = dict(st.params)
+            p["random_seed"] = st.seed
+            replay = synth_luma(base_frames[i].astype(np.uint8), p)
+        diff = np.abs(replay.astype(np.int16) -
+                      grain_frames[i].astype(np.int16))
+        worst = max(worst, int(diff.max()))
+        exact += int(diff.max() == 0)
+    return {"frames": n, "exact": exact, "maxdiff": worst,
+            "exact_all": exact == n and n > 0}
+
+
+def _save_states(group_dir: Path, state_store: dict) -> None:
+    state_dir = group_dir / "states"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    for route, states in state_store.items():
+        (state_dir / f"{route}.json").write_text(
+            json.dumps([s.to_dict() for s in states], indent=2))
 
 
 def _report_to_dict(rep: az.SegmentReport) -> dict:

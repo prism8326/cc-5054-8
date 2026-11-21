@@ -9,7 +9,12 @@ const E = {};
 els.forEach((k) => (E[k] = $(k)));
 
 async function init() {
-  REPORT = await (await fetch("/api/report")).json();
+  const res = await fetch("/api/report");
+  if (!res.ok) {            // 仅有 grainlab 数据时隐藏主实验面板
+    document.body.classList.add("no-report");
+    return;
+  }
+  REPORT = await res.json();
   const n = REPORT.config.frames;
   E.frame.max = n - 1;
   ["group", "route", "layer", "frame"].forEach((k) =>

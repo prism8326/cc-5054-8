@@ -81,6 +81,55 @@
   <div id="parity"></div>
 </section>
 
+<section id="grainlab" class="lab" hidden>
+  <h2>颗粒状态实验：平场 + 切镜</h2>
+  <p class="sub" id="glScope"></p>
+
+  <div class="gl-controls">
+    <label>码流
+      <select id="glStream">
+        <option value="grain_on">grain_on · 颗粒开（平场+切镜）</option>
+        <option value="grain_off">grain_off · 颗粒关</option>
+        <option value="twin_P">twin_P · 切镜后参数 H</option>
+        <option value="twin_Q">twin_Q · 切镜后参数 V</option>
+      </select>
+    </label>
+    <label>显示层
+      <select id="glLayer">
+        <option value="replay" selected>状态缓存重演（应逐像素等于解码器）</option>
+        <option value="grain">解码器含颗粒输出</option>
+        <option value="base">无颗粒底图（--skip-film-grain）</option>
+      </select>
+    </label>
+    <label>帧 <input type="range" id="glFrame" min="0" max="47" value="0">
+      <span id="glFrameLabel">0</span></label>
+    <button id="glPlay">播放</button>
+  </div>
+
+  <div class="gl-stage">
+    <div class="framewrap">
+      <img id="glImg" alt="颗粒实验帧">
+      <div id="glTag" class="tag"></div>
+    </div>
+    <div class="gl-info">
+      <h3>该显示帧的状态（码流解析）</h3>
+      <div id="glState"></div>
+      <h3>逐帧重演核对</h3>
+      <div id="glReplay"></div>
+    </div>
+  </div>
+
+  <div class="gl-timeline" id="glTimeline"></div>
+
+  <div class="gl-cards">
+    <div class="card"><h3>逐帧缓存 vs 序号推算种子</h3><div id="glAccess"></div></div>
+    <div class="card"><h3>颗粒开/关：底图与统计</h3><div id="glSwitch"></div></div>
+    <div class="card"><h3>同强度双片（切镜处换参数）</h3><div id="glTwin"></div></div>
+    <div class="card"><h3>重复施加（错误调用位置）</h3><div id="glDouble"></div></div>
+  </div>
+</section>
+
 <script src="/app.js"></script>
+<script src="/grains.js"></script>
 </body>
 </html>

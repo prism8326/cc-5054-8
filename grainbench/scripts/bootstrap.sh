@@ -54,4 +54,7 @@ export LD_LIBRARY_PATH="${OPT}/aom/usr/lib/aarch64-linux-gnu"
 "${OPT}/ffmpeg/ffmpeg" -version | head -1
 "${OPT}/aom/usr/bin/aomenc" --help 2>&1 | grep -q film-grain-table \
   && echo "aomenc film-grain-table 支持 OK"
-echo "环境就绪。运行：python3 -m grainbench.cli run <输出目录>"
+echo "环境就绪。运行："
+echo "  python3 -m grainbench.cli run     <输出目录>   # 主实验（三路编码对照）"
+echo "  python3 -m grainbench.cli grainlab <输出目录>   # 平场+切镜颗粒状态实验"
+echo "  python3 -m grainbench.cli web     <输出目录>   # 启动实验台界面"
